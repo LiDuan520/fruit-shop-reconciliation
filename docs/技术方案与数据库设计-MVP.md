@@ -305,7 +305,7 @@ frontend/
 | phone | varchar(30) | 联系电话 |
 | address | varchar(255) | 配送地址 |
 | default_cutoff_time | time | 默认下单截止时间 |
-| settlement_cycle | varchar(20) | 结算周期，如 weekly |
+| settlement_cycle | varchar(20) | 结算周期（V0纯文本备注字段，不参与自动逻辑；对账单生成时手动传入起止日期），如 weekly |
 | status | common_status | 启用状态 |
 | remark | text | 备注 |
 | created_at | timestamptz | 创建时间 |
@@ -657,7 +657,7 @@ frontend/
 ### 下单与价格
 
 - 饭店端只能选择启用客户、启用商品
-- 下单时必须找到对应 `delivery_date + product + unit` 的价格
+- 下单时价格查询优先级：①当日价格（`price_date=当日`）→②沿用最近一次历史价格（`ORDER BY price_date DESC LIMIT 1`，前端标注沿用日期）→③无任何历史定价则该商品不可下单
 - 订单明细必须写入价格快照
 - 后续修改 `daily_prices` 不影响历史订单
 
@@ -698,6 +698,7 @@ frontend/
 
 - 只统计 `delivered` 订单
 - 金额来自 `fulfillment_items`
+- 对账单生成接口接收手动传入的 `period_start` / `period_end`，不自动按 `settlement_cycle` 计算周期
 - 对账单生成后，保存订单快照到 `statement_items`
 - 收款后更新 `paid_amount` 和 `balance_amount`
 - 欠款不直接改订单，使用对账单和收款记录体现
